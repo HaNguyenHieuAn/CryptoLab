@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Phòng thí nghiệm tương tác cho Playfair, RSA, DES và AES.">
+  <title>Phòng thí nghiệm mã hóa</title>
+  <link rel="stylesheet" href="assets/lab.css">
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar" aria-label="Điều hướng thuật toán">
+    <div class="brand"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span><div><strong>Mật mã học</strong><span>Phòng thí nghiệm</span></div></div>
+    <nav class="navigation" aria-label="Thuật toán">
+      <div class="nav-group">
+        <p>Cổ điển</p>
+        <button type="button" data-open="playfair" aria-controls="panel-playfair" aria-current="page"><span class="nav-icon icon-grid" aria-hidden="true">▦</span>Playfair<span class="nav-arrow" aria-hidden="true">›</span></button>
+      </div>
+      <div class="nav-group">
+        <p>Bất đối xứng</p>
+        <button type="button" data-open="rsa" aria-controls="panel-rsa"><span class="nav-icon" aria-hidden="true">⇄</span>RSA<span class="nav-arrow" aria-hidden="true">›</span></button>
+      </div>
+      <div class="nav-group">
+        <p>Đối xứng</p>
+        <button type="button" data-open="des" aria-controls="panel-des"><span class="nav-icon" aria-hidden="true">◇</span>DES<span class="nav-arrow" aria-hidden="true">›</span></button>
+        <button type="button" data-open="aes" aria-controls="panel-aes"><span class="nav-icon" aria-hidden="true">◈</span>AES<span class="nav-arrow" aria-hidden="true">›</span></button>
+      </div>
+    </nav>
+    <div class="sidebar-foot"><span aria-hidden="true"></span>Xử lý cục bộ</div>
+  </aside>
+
+  <div class="main-area">
+    <header class="topbar">
+      <div class="breadcrumb"><span>Bàn thực hành</span><span aria-hidden="true">/</span><strong id="breadcrumb-alg">Playfair</strong></div>
+      <button class="btn btn-small" id="open-help" type="button"><span class="help-icon" aria-hidden="true">?</span> Hướng dẫn</button>
+    </header>
+
+    <main class="content">
+      <noscript><p class="alert">Hãy bật JavaScript để chạy mô phỏng.</p></noscript>
+
+      <section class="algorithm" id="panel-playfair" aria-labelledby="title-playfair">
+        <div class="hero">
+          <div><h1 id="title-playfair" tabindex="-1">Mã hóa Playfair</h1><p>Biến đổi từng cặp chữ bằng ma trận khóa 5 × 5.</p></div>
+          <dl class="hero-facts"><div><dt>Đơn vị xử lý</dt><dd>Cặp ký tự</dd></div><div><dt>Bảng chữ cái</dt><dd>25 ký tự</dd></div></dl>
+        </div>
+        <div class="workspace">
+          <article class="card">
+            <div class="card-heading"><h2>Dữ liệu đầu vào</h2><button class="btn btn-small" id="pf-example" type="button">Dùng ví dụ</button></div>
+            <form id="pf-form" novalidate>
+              <div class="segment" role="group" aria-label="Thao tác Playfair">
+                <button type="button" data-pf-direction="encrypt" aria-pressed="true">Mã hóa</button>
+                <button type="button" data-pf-direction="decrypt" aria-pressed="false">Giải mã</button>
+              </div>
+              <div class="field">
+                <label for="pf-key">Khóa bí mật</label>
+                <input id="pf-key" class="mono" maxlength="1000" spellcheck="false" autocomplete="off">
+                <p class="field-note">Ma trận dùng chung một ô cho I và J.</p>
+              </div>
+              <div class="field">
+                <label for="pf-input" id="pf-input-label">Bản rõ</label>
+                <textarea id="pf-input" rows="3" spellcheck="false"></textarea>
+                <p id="pf-input-note" class="field-note">Ứng dụng bỏ dấu và giữ các chữ cái Latin.</p>
+              </div>
+              <p id="pf-error" class="alert" role="alert" hidden></p>
+              <button id="pf-run" class="btn btn-primary" type="submit">Mã hóa <span aria-hidden="true">→</span></button>
+            </form>
+            <div id="pf-result" class="result" hidden>
+              <div class="result-head"><h3 id="pf-result-label">Bản mã</h3><button class="btn btn-quiet btn-small" id="pf-copy" type="button">Sao chép</button></div>
+              <pre id="pf-output" class="output" tabindex="0" aria-label="Kết quả Playfair"></pre>
+              <p id="pf-result-note" class="result-note"></p>
+              <button class="text-btn" id="pf-reverse" type="button">Dùng để giải mã <span aria-hidden="true">→</span></button>
+              <details class="detail"><summary>Chuẩn hóa và chia cặp</summary><dl id="pf-prepared" class="hex-list"></dl></details>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card-heading"><h2>Ma trận khóa</h2><span class="meta mono">5 × 5</span></div>
+            <div class="matrix-area">
+              <table id="pf-matrix" class="letter-matrix mono" aria-label="Ma trận khóa Playfair"></table>
+              <div class="matrix-legend"><span><i class="legend-in"></i>Cặp vào</span><span><i class="legend-out"></i>Cặp ra</span><span>I/J cùng ô</span></div>
+            </div>
+            <p id="pf-empty" class="empty">Thực hiện mã hóa hoặc giải mã để xem quy tắc của từng cặp.</p>
+            <div id="pf-trace" class="trace" hidden>
+              <div class="trace-head">
+                <p class="eyebrow" id="pf-step-count"></p>
+                <div class="arrow-group">
+                  <button class="btn btn-square" id="pf-prev" type="button" aria-label="Cặp trước">←</button>
+                  <button class="btn btn-square" id="pf-next" type="button" aria-label="Cặp tiếp theo">→</button>
+                </div>
+              </div>
+              <div id="pf-current" class="pair-current" aria-live="polite"></div>
+              <p id="pf-explain" class="trace-note"></p>
+              <p id="pf-filler" class="trace-note" hidden></p>
+              <div class="pair-list" id="pf-pairs" role="group" aria-label="Chọn cặp ký tự"></div>
+            </div>
+          </article>
+        </div>
+        <article class="card lesson">
+          <div class="card-heading"><h2>Quy tắc đổi từng cặp</h2></div>
+          <div class="rule-grid">
+            <div><h3>Cùng hàng <span aria-hidden="true">↔</span></h3><p>Khi mã hóa, dịch phải một ô. Khi giải mã, dịch trái một ô. Qua mép thì quay vòng.</p></div>
+            <div><h3>Cùng cột <span aria-hidden="true">↕</span></h3><p>Khi mã hóa, dịch xuống một ô. Khi giải mã, dịch lên một ô. Qua mép thì quay vòng.</p></div>
+            <div><h3>Hình chữ nhật <span aria-hidden="true">◇</span></h3><p>Giữ nguyên hàng của từng chữ và đổi cột giữa hai chữ. Hai chiều dùng cùng quy tắc.</p></div>
+          </div>
+        </article>
+      </section>
+
+      <section class="algorithm" id="panel-rsa" aria-labelledby="title-rsa" hidden>
+        <div class="hero">
+          <div><h1 id="title-rsa" tabindex="-1">Mã hóa RSA</h1><p>Tạo cặp khóa từ hai số nguyên tố và theo dõi lũy thừa modulo.</p></div>
+          <dl class="hero-facts"><div><dt>Loại khóa</dt><dd>Công khai &amp; bí mật</dd></div><div><dt>Định dạng</dt><dd>Số nguyên · UTF-8</dd></div></dl>
+        </div>
+        <div class="workspace rsa-key-workspace">
+          <article class="card">
+            <div class="card-heading"><h2>Tham số tạo khóa</h2><button class="btn btn-small" type="button" id="rsa-example">Dùng ví dụ</button></div>
+            <form id="rsa-key-form" novalidate>
+              <div class="form-grid three">
+                <div class="field"><label for="rsa-p">Số nguyên tố p</label><input id="rsa-p" class="mono" inputmode="numeric" autocomplete="off"></div>
+                <div class="field"><label for="rsa-q">Số nguyên tố q</label><input id="rsa-q" class="mono" inputmode="numeric" autocomplete="off"></div>
+                <div class="field"><label for="rsa-e">Số mũ e</label><input id="rsa-e" class="mono" inputmode="numeric" autocomplete="off"></div>
+              </div>
+              <p class="field-note">p và q khác nhau, tối đa 1.000.000.000. Chọn e sao cho gcd(e, φ(n)) = 1.</p>
+              <p id="rsa-key-error" class="alert" role="alert" hidden></p>
+              <button class="btn btn-primary" type="submit">Tạo cặp khóa <span aria-hidden="true">→</span></button>
+            </form>
+            <div id="rsa-key-summary" class="key-grid" hidden>
+              <div><p>Khóa công khai (n, e)</p><code id="rsa-public"></code><small>Dùng để mã hóa</small></div>
+              <div><p>Khóa bí mật (n, d)</p><code id="rsa-private"></code><small>Dùng để giải mã</small></div>
+            </div>
+          </article>
+          <article class="card">
+            <div class="card-heading"><h2>Quy trình tạo khóa</h2></div>
+            <p id="rsa-key-empty" class="empty">Tạo cặp khóa để xem cách tính n, φ(n) và d.</p>
+            <div id="rsa-key-trace" hidden>
+              <ol class="process-list" id="rsa-derivation"></ol>
+              <details class="detail">
+                <summary>Các bước Euclid mở rộng</summary>
+                <div id="rsa-euclid" class="table-scroll"></div>
+              </details>
+            </div>
+          </article>
+        </div>
+        <div class="workspace">
+          <article class="card">
+            <div class="card-heading"><h2>Dữ liệu đầu vào</h2></div>
+            <form id="rsa-data-form" novalidate>
+              <div class="segment" role="group" aria-label="Thao tác RSA">
+                <button type="button" data-rsa-direction="encrypt" aria-pressed="true">Mã hóa</button>
+                <button type="button" data-rsa-direction="decrypt" aria-pressed="false">Giải mã</button>
+              </div>
+              <div class="field">
+                <label for="rsa-format">Định dạng bản rõ</label>
+                <select id="rsa-format"><option value="integer">Số nguyên</option><option value="text">Văn bản UTF-8</option></select>
+              </div>
+              <div class="field">
+                <label id="rsa-input-label" for="rsa-input">Bản rõ m</label>
+                <textarea id="rsa-input" rows="2" spellcheck="false"></textarea>
+                <p class="field-note" id="rsa-input-note"></p>
+              </div>
+              <p id="rsa-data-error" class="alert" role="alert" hidden></p>
+              <button id="rsa-run" class="btn btn-primary" type="submit">Mã hóa <span aria-hidden="true">→</span></button>
+            </form>
+            <div id="rsa-result" class="result" hidden>
+              <div class="result-head"><h3 id="rsa-result-label">Bản mã</h3><button class="btn btn-quiet btn-small" id="rsa-copy" type="button">Sao chép</button></div>
+              <pre id="rsa-output" class="output" tabindex="0" aria-label="Kết quả RSA"></pre>
+              <button class="text-btn" id="rsa-reverse" type="button">Dùng để giải mã <span aria-hidden="true">→</span></button>
+            </div>
+          </article>
+          <article class="card">
+            <div class="card-heading"><h2>Phép tính modulo</h2><span class="meta mono">RSA</span></div>
+            <p id="rsa-calc-empty" class="empty">Thực hiện mã hóa hoặc giải mã để xem phép tính từng phần tử.</p>
+            <div id="rsa-calc" hidden>
+              <div class="field inline-field"><label for="rsa-item">Phần tử</label><select id="rsa-item"></select></div>
+              <div id="rsa-formula" class="formula mono" aria-live="polite"></div>
+              <p id="rsa-formula-note" class="trace-note"></p>
+              <details class="detail">
+                <summary>Bình phương và nhân theo từng bit</summary>
+                <div id="rsa-powers" class="table-scroll"></div>
+              </details>
+            </div>
+            <p class="method-note">Mô phỏng dùng RSA số học thuần với tham số nhỏ để có thể quan sát từng phép tính.</p>
+          </article>
+        </div>
+      </section>
+
+      <template id="block-template">
+        <section class="algorithm" hidden>
+          <div class="hero">
+            <div><h1 data-id="title" tabindex="-1"></h1><p data-id="description"></p></div>
+            <dl class="hero-facts"><div><dt>Kích thước khối</dt><dd data-id="hero-size"></dd></div><div><dt>Số vòng</dt><dd data-id="hero-rounds"></dd></div></dl>
+          </div>
+          <div class="workspace">
+            <article class="card">
+              <div class="card-heading"><h2>Dữ liệu đầu vào</h2><button class="btn btn-small" data-id="example" type="button">Dùng ví dụ</button></div>
+              <form data-id="form" novalidate>
+                <div class="segment" role="group" aria-label="Thao tác mã khối">
+                  <button type="button" data-direction="encrypt" aria-pressed="true">Mã hóa</button>
+                  <button type="button" data-direction="decrypt" aria-pressed="false">Giải mã</button>
+                </div>
+                <div class="form-grid two">
+                  <div class="field"><label data-for="mode">Chế độ</label><select data-id="mode"><option value="cbc">CBC</option><option value="ecb">ECB</option></select></div>
+                  <div class="field"><label data-for="padding">Kiểu đệm</label><select data-id="padding"><option value="pkcs7">PKCS#7</option><option value="none">Không đệm</option></select></div>
+                </div>
+                <div class="form-grid two" data-id="key-grid">
+                  <div class="field" data-id="size-field"><label data-for="size">Cỡ khóa AES</label><select data-id="size"><option value="16">128 bit</option><option value="24">192 bit</option><option value="32">256 bit</option></select></div>
+                  <div class="field"><label data-for="key-format">Định dạng khóa</label><select data-id="key-format"><option value="hex">Hex</option><option value="text">Văn bản UTF-8</option></select></div>
+                </div>
+                <div class="field">
+                  <label data-for="key">Khóa bí mật</label><input data-id="key" class="mono" maxlength="256" autocomplete="off" spellcheck="false">
+                  <p class="field-note" data-id="key-note"></p>
+                </div>
+                <div class="field" data-id="iv-field" hidden>
+                  <div class="label-row"><label data-for="iv">IV dạng Hex</label><button class="text-btn" data-id="new-iv" type="button">Tạo IV</button></div>
+                  <input data-id="iv" class="mono" maxlength="96" autocomplete="off" spellcheck="false">
+                  <p class="field-note" data-id="iv-note"></p>
+                </div>
+                <div class="field">
+                  <div class="label-row"><label data-for="input" data-id="input-label">Bản rõ</label>
+                    <select data-id="data-format" class="compact-select" aria-label="Định dạng bản rõ"><option value="hex">Hex</option><option value="text">UTF-8</option></select>
+                  </div>
+                  <textarea data-id="input" rows="2" spellcheck="false"></textarea>
+                  <p class="field-note" data-id="input-note"></p>
+                </div>
+                <p data-id="error" class="alert" role="alert" hidden></p>
+                <button data-id="run" class="btn btn-primary" type="submit">Mã hóa <span aria-hidden="true">→</span></button>
+              </form>
+              <div data-id="result" class="result" hidden>
+                <div class="result-head"><h3 data-id="result-label">Bản mã</h3><button class="btn btn-quiet btn-small" data-id="copy" type="button">Sao chép</button></div>
+                <pre data-id="output" class="output" tabindex="0" aria-label="Kết quả mã khối"></pre>
+                <p data-id="result-note" class="result-note"></p>
+                <button class="text-btn" data-id="reverse" type="button">Dùng để giải mã <span aria-hidden="true">→</span></button>
+              </div>
+            </article>
+            <article class="card">
+              <div class="card-heading"><h2>Phân tích khối</h2><span class="meta mono" data-id="trace-mode"></span></div>
+              <p data-id="empty" class="empty">Thực hiện mã hóa hoặc giải mã để xem luồng xử lý từng khối.</p>
+              <div data-id="trace" class="block-trace" hidden>
+                <div class="trace-controls">
+                  <div class="field"><label data-for="block">Khối dữ liệu</label><select data-id="block"></select></div>
+                  <div class="field"><label data-for="round">Vòng xử lý</label><select data-id="round"></select></div>
+                </div>
+                <dl data-id="flow" class="hex-list"></dl>
+                <div data-id="round-view" class="round-view"></div>
+              </div>
+            </article>
+          </div>
+          <article class="card lesson">
+            <div class="card-heading"><h2>Chế độ và kiểu đệm</h2></div>
+            <div class="rule-grid">
+              <div><h3>ECB</h3><p>Xử lý từng khối độc lập. Với một khóa, các khối rõ trùng nhau tạo bản mã trùng nhau.</p></div>
+              <div><h3>CBC</h3><p>Trước khi mã hóa, XOR mỗi khối rõ với khối mã trước đó. Khối đầu dùng IV.</p></div>
+              <div><h3>PKCS#7</h3><p>Thêm k byte có giá trị k, kể cả khi dữ liệu vừa tròn khối. Giải mã kiểm tra và bỏ phần đệm.</p></div>
+            </div>
+          </article>
+        </section>
+      </template>
+    </main>
+  </div>
+</div>
+
+<dialog id="help" aria-labelledby="help-title">
+  <div class="dialog-inner">
+    <div class="card-heading"><h2 id="help-title">Hướng dẫn thực hành</h2><form method="dialog"><button class="btn btn-square" type="submit" aria-label="Đóng hướng dẫn">×</button></form></div>
+    <ol class="help-list">
+      <li>Chọn thuật toán ở thanh điều hướng. Nút <strong>Dùng ví dụ</strong> nạp dữ liệu mẫu và chạy mã hóa.</li>
+      <li>Thay khóa và dữ liệu, rồi chọn <strong>Mã hóa</strong> hoặc <strong>Giải mã</strong>. Với RSA, tạo cặp khóa sau khi đổi p, q hoặc e.</li>
+      <li>Đọc kết quả bên dưới biểu mẫu. Nút <strong>Dùng để giải mã</strong> chuyển bản mã vào ô nhập và giữ các tham số cần thiết.</li>
+      <li>Chọn cặp chữ, phần tử RSA hoặc khối và vòng xử lý DES/AES để xem giá trị trung gian.</li>
+    </ol>
+    <p class="method-note">Tất cả phép tính chạy trong trình duyệt. Ứng dụng phục vụ học tập và kiểm chứng thuật toán.</p>
+  </div>
+</dialog>
+<div id="status" class="toast" role="status" aria-live="polite"></div>
+
+<script src="src/bytes.js"></script>
+<script src="src/playfair.js"></script>
+<script src="src/rsa.js"></script>
+<script src="src/des.js"></script>
+<script src="src/aes.js"></script>
+<script src="src/blocks.js"></script>
+<script src="src/ui-common.js"></script>
+<script src="src/ui-playfair.js"></script>
+<script src="src/ui-rsa.js"></script>
+<script src="src/ui-blocks.js"></script>
+<script src="src/main.js"></script>
+</body>
+</html>
